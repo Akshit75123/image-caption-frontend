@@ -127,12 +127,13 @@
 
           try {
             const response = await fetch(
-              "https://image-captioning-server-su12.onrender.com/",
-              {
-                method: "POST",
-                body: formData,
-              }
-            );
+  "https://image-captioning-server-su12.onrender.com/caption",
+  {
+    method: "POST",
+    body: formData,
+  }
+);
+
 
             const data = await response.json();
             captionText.textContent = data.caption || "No caption generated.";
