@@ -25,6 +25,16 @@
   </head>
 
   <body class="min-h-screen flex items-center justify-center p-4 sm:p-6">
+    <!-- Loading Overlay -->
+    <div
+      id="loadingOverlay"
+      class="fixed inset-0 bg-white bg-opacity-80 flex items-center justify-center z-50 hidden"
+    >
+      <div
+        class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-indigo-500"
+      ></div>
+    </div>
+
     <div
       class="bg-white shadow-2xl rounded-3xl w-full max-w-4xl overflow-hidden border border-indigo-100"
     >
@@ -34,7 +44,7 @@
         <h1
           class="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight"
         >
-          AI Image Captioning
+          Image Caption Generator App
         </h1>
         <p class="mt-2 sm:mt-3 text-lg sm:text-xl font-light">
           Let deep learning describe what it sees
@@ -42,17 +52,20 @@
       </div>
 
       <div class="p-6 sm:p-10">
-        <form id="uploadForm" class="flex flex-col space-y-6 sm:space-y-8">
+        <form
+          id="uploadForm"
+          class="flex flex-col items-center space-y-6 sm:space-y-8"
+        >
           <div
-            class="flex flex-col sm:flex-row sm:items-center sm:space-x-6 w-full justify-center"
+            class="flex flex-col sm:flex-row items-center justify-center gap-6 w-full"
           >
             <label
               for="imageInput"
-              class="relative cursor-pointer w-full max-w-xs sm:max-w-md h-44 sm:h-52 border-4 border-dashed border-indigo-300 flex items-center justify-center rounded-2xl bg-indigo-50 hover:bg-indigo-100 transition overflow-hidden"
+              class="relative cursor-pointer w-full sm:w-64 h-44 border-4 border-dashed border-indigo-300 flex items-center justify-center rounded-2xl bg-indigo-50 hover:bg-indigo-100 transition overflow-hidden"
             >
               <span
                 id="uploadText"
-                class="text-indigo-600 font-semibold text-sm sm:text-base z-10"
+                class="text-indigo-600 font-semibold text-base sm:text-lg z-10"
                 >Upload Image</span
               >
               <input
@@ -61,33 +74,29 @@
                 accept="image/*"
                 class="hidden"
               />
-              <img
-                id="previewImageBg"
-                class="absolute inset-0 w-full h-full object-cover hidden"
-              />
             </label>
 
             <img
               id="previewImage"
-              class="w-36 sm:w-52 h-44 sm:h-52 rounded-2xl shadow-xl hidden ring-2 ring-indigo-300 object-contain"
+              class="w-40 sm:w-52 h-auto rounded-2xl shadow-xl hidden ring-2 ring-indigo-300 object-contain"
             />
           </div>
 
           <button
             type="submit"
-            class="bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white font-semibold py-1.5 sm:py-2 px-6 rounded-xl text-sm sm:text-base shadow-md transition-all duration-300 w-auto"
+            class="bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white font-semibold py-2 px-5 rounded-2xl text-sm sm:text-base shadow-lg transition-all duration-300"
           >
-            Caption
+            Generate
           </button>
         </form>
 
         <div id="captionResult" class="mt-8 sm:mt-10 text-center hidden">
           <p class="text-base sm:text-lg text-gray-500 mb-1 sm:mb-2">
-            📝 Generated Caption
+            Generated Caption
           </p>
           <p
             id="captionText"
-            class="text-sm sm:text-2xl text-gray-800 bg-gray-100 px-4 py-3 rounded-xl inline-block shadow-md"
+            class="text-sm sm:text-2xl text-gray-800 bg-gray-100 px-4 py-3 rounded-xl inline-block shadow-md max-w-xs sm:max-w-md mx-auto"
           ></p>
         </div>
       </div>
@@ -95,9 +104,12 @@
 
     <script>
       const imageInput = document.getElementById("imageInput");
+      const uploadPreview = document.getElementById("uploadPreview");
       const previewImage = document.getElementById("previewImage");
       const captionResult = document.getElementById("captionResult");
       const captionText = document.getElementById("captionText");
+      const uploadText = document.getElementById("uploadText");
+      const loadingOverlay = document.getElementById("loadingOverlay");
 
       imageInput.addEventListener("change", (e) => {
         const file = e.target.files[0];
@@ -106,10 +118,8 @@
           reader.onload = function (event) {
             previewImage.src = event.target.result;
             previewImage.classList.remove("hidden");
-
-            document.getElementById("previewImageBg").classList.add("hidden");
+            // uploadText.classList.add("hidden");
           };
-
           reader.readAsDataURL(file);
         }
       });
@@ -125,11 +135,17 @@
           const formData = new FormData();
           formData.append("image", file);
 
+          // Show loading spinner
+          loadingOverlay.classList.remove("hidden");
+
           try {
-            const response = await fetch("http://localhost:3000/caption", {
-              method: "POST",
-              body: formData,
-            });
+            const response = await fetch(
+              "https://image-captioning-server-ksf0.onrender.com/caption",
+              {
+                method: "POST",
+                body: formData,
+              }
+            );
 
             const data = await response.json();
             captionText.textContent = data.caption || "No caption generated.";
@@ -143,6 +159,8 @@
           } catch (err) {
             captionText.textContent = "Failed to get caption.";
             captionResult.classList.remove("hidden");
+          } finally {
+            loadingOverlay.classList.add("hidden");
           }
         });
     </script>
